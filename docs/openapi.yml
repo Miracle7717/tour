@@ -1,0 +1,791 @@
+openapi: 3.0.3
+info:
+  title: Конные и активные туры API
+  version: 1.0.0
+  description: Бронирование туров, категории, регистрация участников и отзывы после
+    завершённой поездки.
+paths:
+  /api/auth/register/:
+    post:
+      operationId: auth_register_create
+      description: Создаёт учётную запись и связанный профиль 1:1. Пароль не возвращается
+        в ответе; телефон необязателен.
+      summary: Зарегистрировать участника
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Registration'
+            examples:
+              РегистрацияУчастника:
+                value:
+                  username: rider
+                  email: rider@example.com
+                  password: secure-pass-123
+                  phone: '+79990000000'
+                summary: Регистрация участника
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Registration'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Registration'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registration'
+          description: ''
+  /api/bookings/:
+    get:
+      operationId: bookings_list
+      summary: Получить свои бронирования
+      tags:
+      - bookings
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Booking'
+          description: ''
+    post:
+      operationId: bookings_create
+      description: Требуется авторизация. Поля user и status задаются сервисом. Участник
+        может иметь только одно активное бронирование на точное время начала независимо
+        от тура. Для повторной записи отмените предыдущее бронирование.
+      summary: Забронировать тур
+      tags:
+      - bookings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Booking'
+            examples:
+              БронированиеТура:
+                value:
+                  tour: 1
+                  scheduled_at: '2027-06-15T10:00:00+03:00'
+                summary: Бронирование тура
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Booking'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Booking'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+          description: ''
+  /api/bookings/{id}/:
+    get:
+      operationId: bookings_retrieve
+      summary: Получить своё бронирование
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          pattern: ^\d+$
+        required: true
+      tags:
+      - bookings
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Booking'
+          description: ''
+  /api/categories/:
+    get:
+      operationId: categories_list
+      summary: Получить список категорий
+      tags:
+      - categories
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+          description: ''
+    post:
+      operationId: categories_create
+      description: Требуется авторизация администратора. Название и slug должны быть
+        уникальными.
+      summary: Создать категорию
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+            examples:
+              КатегорияКонногоТура:
+                value:
+                  name: Конный
+                  slug: horseback
+                summary: Категория конного тура
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/categories/{id}/:
+    get:
+      operationId: categories_retrieve
+      summary: Получить категорию
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this категория.
+        required: true
+      tags:
+      - categories
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: categories_update
+      description: Требуется авторизация администратора; передайте name и slug.
+      summary: Полностью обновить категорию
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this категория.
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+            examples:
+              ОбновлениеКатегории:
+                value:
+                  name: Конный тур
+                  slug: horseback-tour
+                summary: Обновление категории
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      description: Требуется авторизация администратора; передайте изменяемые поля.
+      summary: Частично обновить категорию
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this категория.
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+            examples:
+              ИзменениеНазвания:
+                value:
+                  name: Конные прогулки
+                summary: Изменение названия
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: categories_destroy
+      summary: Удалить категорию (администратор)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this категория.
+        required: true
+      tags:
+      - categories
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/reviews/:
+    get:
+      operationId: reviews_list
+      summary: Получить свои отзывы
+      tags:
+      - reviews
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+          description: ''
+    post:
+      operationId: reviews_create
+      description: Требуется авторизация. Отзыв можно оставить только о собственном
+        завершённом бронировании. Допускается несколько отзывов на одно бронирование.
+      summary: Оставить отзыв о завершённом туре
+      tags:
+      - reviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Review'
+            examples:
+              Отзыв:
+                value:
+                  booking: 1
+                  rating: 5
+                  comment: Отличный маршрут и спокойные лошади!
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Review'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Review'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+          description: ''
+  /api/tours/:
+    get:
+      operationId: tours_list
+      summary: Получить список опубликованных туров
+      tags:
+      - tours
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tour'
+          description: ''
+    post:
+      operationId: tours_create
+      description: Требуется авторизация администратора. Передайте категории как список
+        существующих ID; цена должна быть неотрицательной, длительность — больше нуля.
+      summary: Создать тур
+      tags:
+      - tours
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tour'
+            examples:
+              КоннаяПрогулка:
+                value:
+                  title: Конная прогулка по лесу
+                  description: Маршрут для начинающих
+                  price: '2500.00'
+                  duration_minutes: 120
+                  categories:
+                  - 1
+                  is_active: true
+                summary: Конная прогулка
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tour'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tour'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tour'
+          description: ''
+  /api/tours/{id}/:
+    get:
+      operationId: tours_retrieve
+      summary: Получить тур
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this тур.
+        required: true
+      tags:
+      - tours
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tour'
+          description: ''
+    put:
+      operationId: tours_update
+      description: Требуется авторизация администратора; передайте все поля тура.
+      summary: Полностью обновить тур
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this тур.
+        required: true
+      tags:
+      - tours
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Tour'
+            examples:
+              ОбновлениеТура:
+                value:
+                  title: Конная прогулка по лесу
+                  description: Обновлённое описание маршрута
+                  price: '2700.00'
+                  duration_minutes: 150
+                  categories:
+                  - 1
+                  - 2
+                  is_active: true
+                summary: Обновление тура
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Tour'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Tour'
+        required: true
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tour'
+          description: ''
+    patch:
+      operationId: tours_partial_update
+      description: Требуется авторизация администратора; передайте изменяемые поля.
+      summary: Частично обновить тур
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this тур.
+        required: true
+      tags:
+      - tours
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTour'
+            examples:
+              ИзменениеЦены:
+                value:
+                  price: '2700.00'
+                summary: Изменение цены
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTour'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTour'
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tour'
+          description: ''
+    delete:
+      operationId: tours_destroy
+      summary: Удалить тур (администратор)
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this тур.
+        required: true
+      tags:
+      - tours
+      security:
+      - basicAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+components:
+  schemas:
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: integer
+          readOnly: true
+          description: Устанавливается автоматически по авторизованному пользователю.
+        tour:
+          type: integer
+          description: ID опубликованного тура.
+        scheduled_at:
+          type: string
+          format: date-time
+          description: Дата и время начала тура в формате ISO 8601 с часовым поясом.
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+          description: |-
+            Устанавливается сервисом; новый заказ получает статус pending.
+
+            * `pending` - Ожидает подтверждения
+            * `confirmed` - Подтверждена
+            * `completed` - Завершена
+            * `cancelled` - Отменена
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Создана
+      required:
+      - created_at
+      - id
+      - scheduled_at
+      - status
+      - tour
+      - user
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название
+          description: Название категории, например «Конный».
+          maxLength: 80
+        slug:
+          type: string
+          title: URL-код
+          description: Уникальный URL-код категории.
+          maxLength: 90
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - id
+      - name
+      - slug
+    PatchedCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          title: Название
+          description: Название категории, например «Конный».
+          maxLength: 80
+        slug:
+          type: string
+          title: URL-код
+          description: Уникальный URL-код категории.
+          maxLength: 90
+          pattern: ^[-a-zA-Z0-9_]+$
+    PatchedTour:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          title: Название
+          maxLength: 160
+        description:
+          type: string
+          title: Описание
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Цена тура, неотрицательное число с двумя знаками после запятой.
+        duration_minutes:
+          type: integer
+          minimum: 1
+          description: Продолжительность тура в минутах.
+        categories:
+          type: array
+          items:
+            type: integer
+          description: Список ID категорий тура, например [1, 2].
+        is_active:
+          type: boolean
+          title: Опубликован
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Создан
+    Registration:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        username:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          pattern: ^[\w.@+-]+$
+          maxLength: 150
+        email:
+          title: Адрес электронной почты
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        password:
+          type: string
+          writeOnly: true
+          description: Пароль длиной не менее 8 символов.
+          minLength: 8
+        phone:
+          type: string
+          description: Необязательный номер телефона.
+          maxLength: 32
+      required:
+      - id
+      - password
+      - username
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        booking:
+          type: integer
+          description: ID собственного завершённого бронирования.
+        user:
+          type: string
+          title: Имя пользователя
+          description: Обязательное поле. Не более 150 символов. Только буквы, цифры
+            и символы @/./+/-/_.
+          readOnly: true
+        tour:
+          type: string
+          title: Название
+          readOnly: true
+        rating:
+          type: integer
+          maximum: 5
+          minimum: 1
+          description: Оценка завершённого тура от 1 до 5.
+        comment:
+          type: string
+          description: Текст отзыва; пустой комментарий не допускается.
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Создан
+      required:
+      - booking
+      - comment
+      - created_at
+      - id
+      - rating
+      - tour
+      - user
+    StatusEnum:
+      enum:
+      - pending
+      - confirmed
+      - completed
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Ожидает подтверждения
+        * `confirmed` - Подтверждена
+        * `completed` - Завершена
+        * `cancelled` - Отменена
+    Tour:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          title: Название
+          maxLength: 160
+        description:
+          type: string
+          title: Описание
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          description: Цена тура, неотрицательное число с двумя знаками после запятой.
+        duration_minutes:
+          type: integer
+          minimum: 1
+          description: Продолжительность тура в минутах.
+        categories:
+          type: array
+          items:
+            type: integer
+          description: Список ID категорий тура, например [1, 2].
+        is_active:
+          type: boolean
+          title: Опубликован
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Создан
+      required:
+      - categories
+      - created_at
+      - description
+      - duration_minutes
+      - id
+      - price
+      - title
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
